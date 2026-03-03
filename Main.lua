@@ -1,16 +1,16 @@
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
--- [[ VARIABEL GLOBAL ]] --
-local FarmingActive = false
-local FarmSpeed = 0.2
-local TargetX = 0
-local TargetY = 0
+-- [[ VARIABEL GLOBAL (FIXED) ]] --
+_G.FarmingActive = false
+_G.FarmSpeed = 0.3
+_G.TargetX = 0
+_G.TargetY = 0
 
 local Window = Rayfield:CreateWindow({
-   Name = "Supreme Farmer | Grid Edition",
-   LoadingTitle = "Executing Farming Protocol...",
+   Name = "Supreme Farmer | Overdrive Edition",
+   LoadingTitle = "Master Logic Initializing...",
    LoadingSubtitle = "by xaizeno17-cyber",
-   ConfigurationSaving = {Enabled = true, FolderName = "SupremeUniversal"},
+   ConfigurationSaving = {Enabled = false},
    KeySystem = false 
 })
 
@@ -21,10 +21,13 @@ TabFarm:CreateToggle({
    Name = "Enable Grid Auto-Farm",
    CurrentValue = false,
    Callback = function(Value)
-      FarmingActive = Value
-      if FarmingActive then
+      _G.FarmingActive = Value
+      if _G.FarmingActive then
          spawn(function()
-            while FarmingActive do
+            -- Memastikan input terdeteksi game
+            game:GetService("VirtualUser"):CaptureController()
+            
+            while _G.FarmingActive do
                pcall(function()
                   local Player = game.Players.LocalPlayer
                   local Character = Player.Character
@@ -32,30 +35,29 @@ TabFarm:CreateToggle({
                   local Tool = Character:FindFirstChildOfClass("Tool")
                   
                   if HRP then
-                     -- KALKULASI GRID (Offset relatif terhadap karakter)
-                     -- TargetX: Kiri(-)/Kanan(+), TargetY: Bawah(-)/Atas(+)
-                     local TargetPos = HRP.CFrame * CFrame.new(TargetX * 5, TargetY * 5, -5)
+                     -- KALKULASI GRID PRESISI (Unit 5 = 1 Block)
+                     local TargetPos = HRP.CFrame * CFrame.new(_G.TargetX * 5, _G.TargetY * 5, -5)
                      
-                     -- CEK OBJEK (Raycast untuk mendeteksi blok)
+                     -- CEK OBJEK (Raycast)
                      local RayParam = RaycastParams.new()
                      RayParam.FilterDescendantsInstances = {Character}
                      local Check = workspace:Raycast(HRP.Position, (TargetPos.Position - HRP.Position), RayParam)
                      
                      if Check and Check.Instance and Check.Instance:IsA("BasePart") then
-                        -- TAHAP 1: BREAK (Jika ada blok -> Pukul)
+                        -- TAHAP 1: BREAK (Pukul Blok yang Terdeteksi)
                         game:GetService("VirtualUser"):ClickButton1(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
                      else
-                        -- TAHAP 2: PLACE (Jika kosong -> Letakkan item di tangan)
+                        -- TAHAP 2: PLACE (Gunakan Item Apapun di Tangan)
                         if Tool then
                            Tool:Activate()
                         else
-                           -- Jika tidak pegang item, tetap pukul untuk membersihkan area
+                           -- Jika Tangan Kosong, Tetap Pukul (Punch)
                            game:GetService("VirtualUser"):ClickButton1(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
                         end
                      end
                   end
                end)
-               task.wait(FarmSpeed)
+               task.wait(_G.FarmSpeed)
             end
          end)
       end
@@ -65,30 +67,30 @@ TabFarm:CreateToggle({
 TabFarm:CreateSection("Farm Configuration")
 
 TabFarm:CreateSlider({
-   Name = "Action Speed (Detik)",
-   Min = 0.05,
+   Name = "Kecepatan Memukul (Detik)",
+   Min = 0.1,
    Max = 1,
-   CurrentValue = 0.2,
-   Callback = function(Value) FarmSpeed = Value end,
+   CurrentValue = 0.3,
+   Callback = function(Value) _G.FarmSpeed = Value end,
 })
 
 TabFarm:CreateSlider({
-   Name = "Grid X (Kiri/Kanan)",
+   Name = "Range Grid X (Kiri -3 / Kanan 3)",
    Min = -3,
    Max = 3,
    CurrentValue = 0,
-   Callback = function(Value) TargetX = Value end,
+   Callback = function(Value) _G.TargetX = Value end,
 })
 
 TabFarm:CreateSlider({
-   Name = "Grid Y (Bawah/Atas)",
+   Name = "Range Grid Y (Bawah -3 / Atas 3)",
    Min = -3,
    Max = 3,
    CurrentValue = 0,
-   Callback = function(Value) TargetY = Value end,
+   Callback = function(Value) _G.TargetY = Value end,
 })
 
--- [[ FLOATING BUTTON (Cadangan jika UI tertutup) ]] --
+-- Tombol Show UI Cadangan
 local ScreenGui = Instance.new("ScreenGui", game.CoreGui)
 local OpenBtn = Instance.new("TextButton", ScreenGui)
 OpenBtn.Size = UDim2.new(0, 80, 0, 30)
