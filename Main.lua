@@ -1,13 +1,14 @@
 --[[ 
-    SUPREME TABBED GUI v1.1
+    SUPREME TABBED GUI v1.2 (WITH TOGGLE)
     Author: xaizeno17-cyber
-    Description: Ringan, Modular, dan User-Friendly untuk Mobile
+    Description: Ringan, Tabbed, dan memiliki fitur Toggle untuk Mobile.
 ]]
 
 local CoreGui = game:GetService("CoreGui")
 local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
 
--- Hapus GUI lama jika ada agar tidak double
+-- Hapus GUI lama agar tidak menumpuk
 if CoreGui:FindFirstChild("SupremeTabMenu") then
     CoreGui.SupremeTabMenu:Destroy()
 end
@@ -16,25 +17,49 @@ end
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "SupremeTabMenu"
 ScreenGui.Parent = CoreGui
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
+-- [TOGGLE BUTTON - Tombol Kecil untuk Buka/Tutup]
+local ToggleBtn = Instance.new("TextButton")
+ToggleBtn.Name = "ToggleBtn"
+ToggleBtn.Size = UDim2.new(0, 50, 0, 50)
+ToggleBtn.Position = UDim2.new(0, 10, 0.5, -25)
+ToggleBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+ToggleBtn.Text = "OPEN"
+ToggleBtn.TextColor3 = Color3.new(1, 1, 1)
+ToggleBtn.Font = Enum.Font.GothamBold
+ToggleBtn.TextSize = 10
+ToggleBtn.Parent = ScreenGui
+
+local ToggleCorner = Instance.new("UICorner")
+ToggleCorner.CornerRadius = UDim.new(0, 50) -- Membuat jadi lingkaran
+ToggleCorner.Parent = ToggleBtn
+
+-- [MAIN FRAME]
 local MainFrame = Instance.new("Frame")
 MainFrame.Name = "MainFrame"
 MainFrame.Size = UDim2.new(0, 350, 0, 220)
 MainFrame.Position = UDim2.new(0.5, -175, 0.5, -110)
 MainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
 MainFrame.BorderSizePixel = 0
+MainFrame.Visible = false -- Mulai dengan tertutup
 MainFrame.Active = true
-MainFrame.Draggable = true -- Support Mobile Drag
+MainFrame.Draggable = true 
 MainFrame.Parent = ScreenGui
 
--- Membuat Sudut Bulat (Rounded Corner)
 local UICorner = Instance.new("UICorner")
 UICorner.CornerRadius = UDim.new(0, 10)
 UICorner.Parent = MainFrame
 
--- [SIDEBAR / TAB NAVIGATION]
+-- [LOGIKA TOGGLE]
+ToggleBtn.MouseButton1Click:Connect(function()
+    MainFrame.Visible = not MainFrame.Visible
+    ToggleBtn.Text = MainFrame.Visible and "CLOSE" or "OPEN"
+    ToggleBtn.BackgroundColor3 = MainFrame.Visible and Color3.fromRGB(200, 0, 0) or Color3.fromRGB(40, 40, 40)
+end)
+
+-- [SIDEBAR NAVIGATION]
 local SideBar = Instance.new("Frame")
-SideBar.Name = "SideBar"
 SideBar.Size = UDim2.new(0, 80, 1, 0)
 SideBar.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
 SideBar.BorderSizePixel = 0
@@ -46,13 +71,12 @@ SideCorner.Parent = SideBar
 
 -- [TAB CONTAINER]
 local TabContainer = Instance.new("Frame")
-TabContainer.Name = "TabContainer"
 TabContainer.Position = UDim2.new(0, 90, 0, 10)
 TabContainer.Size = UDim2.new(1, -100, 1, -20)
 TabContainer.BackgroundTransparency = 1
 TabContainer.Parent = MainFrame
 
--- Fungsi Sederhana untuk Ganti Tab
+-- Fungsi Pembuat Tab
 local function CreateTab(name, pos)
     local TabBtn = Instance.new("TextButton")
     TabBtn.Size = UDim2.new(1, -10, 0, 35)
@@ -80,30 +104,45 @@ local function CreateTab(name, pos)
     return ContentFrame
 end
 
--- [MEMBUAT TAB]
+-- [ISI TAB]
 local PlayerTab = CreateTab("Player", 10)
 local MiscTab = CreateTab("Misc", 50)
 
--- Default Tab yang terbuka
-PlayerTab.Visible = true
+PlayerTab.Visible = true -- Default Tab
 
--- [ISI TAB PLAYER]
+-- Fitur Speed
 local SpeedBtn = Instance.new("TextButton")
 SpeedBtn.Size = UDim2.new(1, -10, 0, 40)
 SpeedBtn.BackgroundColor3 = Color3.fromRGB(0, 120, 215)
 SpeedBtn.Text = "Set Speed (100)"
 SpeedBtn.TextColor3 = Color3.new(1, 1, 1)
+SpeedBtn.Font = Enum.Font.GothamBold
 SpeedBtn.Parent = PlayerTab
 
 SpeedBtn.MouseButton1Click:Connect(function()
-    local Hum = game.Players.LocalPlayer.Character:FindFirstChild("Humanoid")
-    if Hum then Hum.WalkSpeed = 100 end
+    local char = game.Players.LocalPlayer.Character
+    if char and char:FindFirstChild("Humanoid") then
+        char.Humanoid.WalkSpeed = 100
+    end
 end)
 
--- [TOMBOL CLOSE]
-local CloseBtn = Instance.new("TextButton")
-CloseBtn.Size = UDim2.new(0, 30, 0, 30)
-CloseBtn.Position = UDim2.new(1, -35, 0, 5)
+-- Fitur Jump
+local JumpBtn = Instance.new("TextButton")
+JumpBtn.Size = UDim2.new(1, -10, 0, 40)
+JumpBtn.Position = UDim2.new(0, 0, 0, 50)
+JumpBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 0)
+JumpBtn.Text = "Set Jump (100)"
+JumpBtn.TextColor3 = Color3.new(1, 1, 1)
+JumpBtn.Font = Enum.Font.GothamBold
+JumpBtn.Parent = PlayerTab
+
+JumpBtn.MouseButton1Click:Connect(function()
+    local char = game.Players.LocalPlayer.Character
+    if char and char:FindFirstChild("Humanoid") then
+        char.Humanoid.JumpPower = 100
+        char.Humanoid.UseJumpPower = true
+    end
+end)
 CloseBtn.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
 CloseBtn.Text = "X"
 CloseBtn.TextColor3 = Color3.new(1, 1, 1)
