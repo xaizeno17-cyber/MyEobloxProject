@@ -7,8 +7,8 @@ local TargetX = 0
 local TargetY = 0
 
 local Window = Rayfield:CreateWindow({
-   Name = "Supreme Farmer | Craft a World",
-   LoadingTitle = "Focusing on Farming Engine...",
+   Name = "Supreme Farmer | Grid Edition",
+   LoadingTitle = "Executing Farming Protocol...",
    LoadingSubtitle = "by xaizeno17-cyber",
    ConfigurationSaving = {Enabled = true, FolderName = "SupremeUniversal"},
    KeySystem = false 
@@ -31,27 +31,28 @@ TabFarm:CreateToggle({
                   local HRP = Character:FindFirstChild("HumanoidRootPart")
                   local Tool = Character:FindFirstChildOfClass("Tool")
                   
-                  if HRP and Tool then
+                  if HRP then
                      -- KALKULASI GRID (Offset relatif terhadap karakter)
                      -- TargetX: Kiri(-)/Kanan(+), TargetY: Bawah(-)/Atas(+)
-                     -- Pengali 5 unit disesuaikan dengan ukuran blok game
                      local TargetPos = HRP.CFrame * CFrame.new(TargetX * 5, TargetY * 5, -5)
                      
-                     -- CEK OBJEK (Raycast dari karakter ke arah target grid)
+                     -- CEK OBJEK (Raycast untuk mendeteksi blok)
                      local RayParam = RaycastParams.new()
                      RayParam.FilterDescendantsInstances = {Character}
                      local Check = workspace:Raycast(HRP.Position, (TargetPos.Position - HRP.Position), RayParam)
                      
                      if Check and Check.Instance and Check.Instance:IsA("BasePart") then
-                        -- TAHAP 1: BREAK (Jika ada blok, kita pukul)
+                        -- TAHAP 1: BREAK (Jika ada blok -> Pukul)
                         game:GetService("VirtualUser"):ClickButton1(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
                      else
-                        -- TAHAP 2: PLACE (Jika kosong, kita letakkan item di tangan)
-                        Tool:Activate()
+                        -- TAHAP 2: PLACE (Jika kosong -> Letakkan item di tangan)
+                        if Tool then
+                           Tool:Activate()
+                        else
+                           -- Jika tidak pegang item, tetap pukul untuk membersihkan area
+                           game:GetService("VirtualUser"):ClickButton1(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
+                        end
                      end
-                  elseif not Tool then
-                     -- Jika tidak pegang item, sistem tetap mencoba memukul (Punch)
-                     game:GetService("VirtualUser"):ClickButton1(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
                   end
                end)
                task.wait(FarmSpeed)
@@ -87,21 +88,9 @@ TabFarm:CreateSlider({
    Callback = function(Value) TargetY = Value end,
 })
 
--- [[ TAB PENDUKUNG: KARAKTER ]] --
-local TabChar = Window:CreateTab("Character", 4483345998)
-TabChar:CreateInput({
-   Name = "WalkSpeed Bypass",
-   PlaceholderText = "Input 16-300",
-   Callback = function(Text)
-      local s = tonumber(Text)
-      if s then game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = s end
-   end,
-})
-
--- Tombol Show UI di layar (Sesuai gambar Anda)
+-- [[ FLOATING BUTTON (Cadangan jika UI tertutup) ]] --
 local ScreenGui = Instance.new("ScreenGui", game.CoreGui)
 local OpenBtn = Instance.new("TextButton", ScreenGui)
-OpenBtn.Name = "MasterOpen"
 OpenBtn.Size = UDim2.new(0, 80, 0, 30)
 OpenBtn.Position = UDim2.new(0, 10, 0, 80)
 OpenBtn.Text = "Show Menu"
