@@ -1,121 +1,93 @@
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
--- [[ VARIABEL GLOBAL - MENGGUNAKAN TABEL AGAR REAL-TIME ]] --
-_G.SupremeConfig = {
-    Farming = false,
-    Speed = 0.3,
-    X = 0,
-    Y = 0
-}
+-- [[ PUSAT KOORDINAT & KONFIGURASI ]] --
+_G.FarmingActive = false
+_G.FarmSpeed = 0.3 -- Default awal
+_G.TargetX = 0     -- Pusat Karakter (0)
+_G.TargetY = 0     -- Pusat Karakter (0)
 
 local Window = Rayfield:CreateWindow({
-   Name = "Supreme Farmer | Craft Edition",
-   LoadingTitle = "Focusing Logic...",
+   Name = "Supreme Farmer | Precision Grid",
+   LoadingTitle = "Calibrating Relative Coordinates...",
    LoadingSubtitle = "by xaizeno17-cyber",
    ConfigurationSaving = {Enabled = false}
 })
 
-local TabFarm = Window:CreateTab("Auto-Farm", 4483345998)
+local Tab = Window:CreateTab("Auto-Farm", 4483345998)
 
-TabFarm:CreateToggle({
-   Name = "Enable Grid Auto-Farm",
+Tab:CreateToggle({
+   Name = "Start Auto-Farm",
    CurrentValue = false,
    Callback = function(Value)
-      _G.SupremeConfig.Farming = Value
-      if Value then
+      _G.FarmingActive = Value
+      if _G.FarmingActive then
          spawn(function()
             local VU = game:GetService("VirtualUser")
-            VU:CaptureController()
-            
-            while _G.SupremeConfig.Farming do
+            while _G.FarmingActive do
                pcall(function()
                   local Char = game.Players.LocalPlayer.Character
                   local HRP = Char:FindFirstChild("HumanoidRootPart")
                   local Tool = Char:FindFirstChildOfClass("Tool")
                   
                   if HRP then
-                     -- JARAK PER BLOK DI GAME INI BIASANYA 4-5 STUDS
-                     -- Kita hitung posisi target tepat di depan karakter sesuai Grid
-                     local TargetCFrame = HRP.CFrame * CFrame.new(_G.SupremeConfig.X * 4, _G.SupremeConfig.Y * 4, -4)
-                     local TargetPos = TargetCFrame.Position
+                     -- POSISI RELATIF: Menjadikan Player sebagai titik 0,0
+                     -- Mengkonversi koordinat lokal slider ke koordinat dunia (World Space)
+                     local RelativeOffset = Vector3.new(_G.TargetX * 5, _G.TargetY * 5, -5)
+                     local WorldTarget = HRP.CFrame:PointToWorldSpace(RelativeOffset)
                      
-                     -- CEK APAKAH ADA BLOK DI TITIK TERSEBUT
-                     local Region = Region3.new(TargetPos - Vector3.new(1,1,1), TargetPos + Vector3.new(1,1,1))
-                     local Parts = workspace:FindPartsInRegion3(Region, Char, 10)
+                     -- CEK BLOK DI TARGET
+                     local RayParam = RaycastParams.new()
+                     RayParam.FilterDescendantsInstances = {Char}
+                     local Check = workspace:Raycast(HRP.Position, (WorldTarget - HRP.Position), RayParam)
                      
-                     local FoundBlock = false
-                     for _, part in pairs(Parts) do
-                        if part:IsA("BasePart") and part.CanCollide then
-                           FoundBlock = true
-                           break
-                        end
-                     end
-
-                     if FoundBlock then
-                        -- TAHAP 1: HANCURKAN (BREAK)
-                        -- Mengarahkan kamera ke blok agar pukulan masuk
-                        workspace.CurrentCamera.CFrame = CFrame.new(workspace.CurrentCamera.CFrame.Position, TargetPos)
-                        VU:ClickButton1(Vector2.new(0,0))
+                     if Check and Check.Instance then
+                        -- JIKA ADA BLOK -> PUKUL (BREAK)
+                        workspace.CurrentCamera.CFrame = CFrame.new(workspace.CurrentCamera.CFrame.Position, WorldTarget)
+                        VU:Button1Down(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
+                        task.wait(0.05)
+                        VU:Button1Up(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
                      else
-                        -- TAHAP 2: LETAKKAN (PLACE)
+                        -- JIKA KOSONG -> LETAKKAN (PLACE)
                         if Tool then
                            Tool:Activate()
-                        else
-                           -- Jika tangan kosong, tetap pukul untuk memastikan area bersih
-                           VU:ClickButton1(Vector2.new(0,0))
                         end
                      end
                   end
                end)
-               task.wait(_G.SupremeConfig.Speed)
+               task.wait(_G.FarmSpeed)
             end
          end)
       end
    end,
 })
 
-TabFarm:CreateSection("Konfigurasi Presisi")
+Tab:CreateSection("Custom Range & Speed")
 
--- Perbaikan Slider: Menghapus embel-embel "studs" agar terbaca angka murni
-TabFarm:CreateSlider({
-   Name = "Jeda Memukul (Detik)",
+-- SLIDER KECEPATAN: 0.1 sampai 2.0 Detik
+Tab:CreateSlider({
+   Name = "Jeda Memukul (0.1 - 2.0 Detik)",
    Min = 0.1,
-   Max = 1,
+   Max = 2,
    CurrentValue = 0.3,
-   Callback = function(Value) 
-      _G.SupremeConfig.Speed = Value 
-   end,
+   Callback = function(Value) _G.FarmSpeed = Value end,
 })
 
-TabFarm:CreateSlider({
+-- SLIDER RANGE X: -3 sampai 3 (Relatif terhadap Player)
+Tab:CreateSlider({
    Name = "Geser X (Kiri -3 / Kanan 3)",
    Min = -3,
    Max = 3,
    CurrentValue = 0,
-   Callback = function(Value) 
-      _G.SupremeConfig.X = Value 
-   end,
+   Callback = function(Value) _G.TargetX = Value end,
 })
 
-TabFarm:CreateSlider({
+-- SLIDER RANGE Y: -3 sampai 3 (Relatif terhadap Player)
+Tab:CreateSlider({
    Name = "Geser Y (Bawah -3 / Atas 3)",
    Min = -3,
    Max = 3,
    CurrentValue = 0,
-   Callback = function(Value) 
-      _G.SupremeConfig.Y = Value 
-   end,
+   Callback = function(Value) _G.TargetY = Value end,
 })
 
--- Tombol Show UI agar tidak hilang (Floating)
-local ScreenGui = Instance.new("ScreenGui", game.CoreGui)
-local OpenBtn = Instance.new("TextButton", ScreenGui)
-OpenBtn.Size = UDim2.new(0, 80, 0, 30)
-OpenBtn.Position = UDim2.new(0, 10, 0, 120)
-OpenBtn.Text = "Menu"
-OpenBtn.Draggable = true
-OpenBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-OpenBtn.TextColor3 = Color3.new(1,1,1)
-OpenBtn.MouseButton1Click:Connect(function()
-    Rayfield:Notify({Title = "Master Hub", Content = "Tekan RCTRL jika UI tidak terlihat", Duration = 2})
-end)
+Rayfield:Notify({Title = "Master Updated", Content = "Speed 0.1-2s & Grid Pusat Karakter Aktif!", Duration = 5})
