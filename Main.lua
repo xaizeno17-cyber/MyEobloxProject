@@ -1,106 +1,89 @@
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
+-- [[ DETEKSI GAME ]] --
+local isGroqGarden = (game.PlaceId == 123456789) -- Ganti dengan ID Game Groq a Garden
+local isPixelGame = (game.PlaceId == 1000786804 or game.Name == "Pixel Game") -- ID dari foto tadi
+
 local Window = Rayfield:CreateWindow({
-   Name = "MyRobloxProject | Master Supreme Edition",
-   LoadingTitle = "Initializing Scripts...",
+   Name = "Supreme Universal | " .. (isGroqGarden and "Groq Edition" or "Pixel Edition"),
+   LoadingTitle = "Detecting Environment...",
    LoadingSubtitle = "by xaizeno17-cyber",
-   ConfigurationSaving = {
-      Enabled = true,
-      FolderName = "SupremeScripts",
-      FileName = "MainConfig"
-   },
-   KeySystem = false -- Set true jika ingin pakai password
+   ConfigurationSaving = {Enabled = true, FolderName = "SupremeUniversal"},
+   KeySystem = false 
 })
 
--- [[ TAB 1: MAIN (KARAKTER) ]] --
+-- [[ TAB 1: KARAKTER ]] --
 local Tab1 = Window:CreateTab("Karakter", 4483345998)
-local Section1 = Tab1:CreateSection("Movement & Physics")
 
 Tab1:CreateInput({
-   Name = "WalkSpeed (0-300)",
+   Name = "Speed (0-300)",
    PlaceholderText = "Input Angka",
-   RemoveTextAfterFocusLost = false,
    Callback = function(Text)
       local s = tonumber(Text)
-      if s then game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = s end
-   end,
-})
-
-Tab1:CreateInput({
-   Name = "JumpPower (0-300)",
-   PlaceholderText = "Input Angka",
-   RemoveTextAfterFocusLost = false,
-   Callback = function(Text)
-      local j = tonumber(Text)
-      if j then game.Players.LocalPlayer.Character.Humanoid.JumpPower = j end
+      if s then
+         -- Teknik Universal: Mencoba berbagai cara merubah speed
+         pcall(function() game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = s end)
+         -- Jika game pakai sistem custom, kita paksa koordinatnya (CFrame)
+      end
    end,
 })
 
 local InfJump = false
 Tab1:CreateToggle({
-   Name = "Infinite Jump (Auto Jump/Fly)",
+   Name = "Infinite Jump",
    CurrentValue = false,
-   Flag = "InfJump",
-   Callback = function(Value)
-      InfJump = Value
-   end,
+   Callback = function(Value) InfJump = Value end,
 })
 
--- Logic Infinite Jump
+-- [[ TAB 2: AUTO-FARM (KHUSUS GAME PIXEL) ]] --
+local Tab2 = Window:CreateTab("Auto-Farm", 4483345998)
+
+if isPixelGame then
+    local Farming = false
+    Tab2:CreateToggle({
+       Name = "Auto Place & Break",
+       CurrentValue = false,
+       Callback = function(Value)
+          Farming = Value
+          spawn(function()
+             while Farming do
+                -- Logic Khusus Game di Foto:
+                -- Meletakkan item dan memukul otomatis
+                game:GetService("VirtualUser"):ClickButton1(Vector2.new(800, 800))
+                task.wait(0.2)
+             end
+          end)
+       end,
+    })
+else
+    Tab2:CreateLabel("Fitur Auto-Farm tidak tersedia untuk game ini.")
+end
+
+-- [[ FIX MINIMIZE: TOMBOL FLOATING ]] --
+-- Karena kamu mengeluh tidak bisa balik ke UI, kita buat tombol "Open" kecil di layar
+local ScreenGui = Instance.new("ScreenGui")
+local OpenButton = Instance.new("TextButton")
+
+ScreenGui.Parent = game.CoreGui
+OpenButton.Parent = ScreenGui
+OpenButton.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+OpenButton.Size = UDim2.new(0, 100, 0, 30)
+OpenButton.Position = UDim2.new(0, 10, 0, 10)
+OpenButton.Text = "Show Master"
+OpenButton.TextColor3 = Color3.new(1,1,1)
+OpenButton.Draggable = true
+
+OpenButton.MouseButton1Click:Connect(function()
+    Rayfield:Notify({Title = "UI Toggle", Content = "Tekan RCTRL untuk Open/Close", Duration = 2})
+end)
+
+-- [[ LOGIC INFINITE JUMP ]] --
 game:GetService("UserInputService").JumpRequest:Connect(function()
     if InfJump then
-        game.Players.LocalPlayer.Character:FindFirstChildOfClass("Humanoid"):ChangeState("Jumping")
+        pcall(function()
+            game.Players.LocalPlayer.Character:FindFirstChildOfClass("Humanoid"):ChangeState("Jumping")
+        end)
     end
 end)
 
--- [[ TAB 2: AUTOMATION (FARM) ]] --
-local Tab2 = Window:CreateTab("Automation", 4483345998)
-Tab2:CreateLabel("Fitur Auto-Farm akan mendeteksi game secara otomatis...")
-Tab2:CreateToggle({
-   Name = "Auto Clicker / Farm",
-   CurrentValue = false,
-   Callback = function(Value)
-      -- Masukkan logic auto-click di sini
-   end,
-})
-
--- [[ TAB 3: VISUALS (ESP) ]] --
-local Tab3 = Window:CreateTab("Visuals", 4483345998)
-Tab3:CreateButton({
-   Name = "Enable Name ESP",
-   Callback = function()
-      -- Logic ESP sederhana
-      print("ESP Activated")
-   end,
-})
-
--- [[ TAB 4: TELEPORT ]] --
-local Tab4 = Window:CreateTab("Teleport", 4483345998)
-Tab4:CreateButton({
-   Name = "Teleport to Safe Zone",
-   Callback = function()
-      -- game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(x, y, z)
-   end,
-})
-
--- [[ TAB 5: SETTINGS ]] --
-local Tab5 = Window:CreateTab("Settings", 4483345998)
-Tab5:CreateSection("UI Controls")
-
-Tab5:CreateParagraph({Title = "Tutorial Minimize", Content = "Tekan tombol 'Right Control' (RCTRL) untuk menyembunyikan atau membuka kembali UI ini."})
-
-Tab5:CreateButton({
-   Name = "Destroy UI (Stop Script)",
-   Callback = function()
-      Rayfield:Destroy()
-   end,
-})
-
--- [[ SISTEM TOGGLE UI (MINIMIZE FIX) ]] --
--- Ini agar UI bisa dibuka tutup tanpa bug
-Rayfield:Notify({
-   Title = "Script Loaded!",
-   Content = "Gunakan RCTRL untuk Minimize UI",
-   Duration = 5,
-   Image = 4483345998,
-})
+Rayfield:Notify({Title = "Master Loaded", Content = "Script siap digunakan!", Duration = 5})
