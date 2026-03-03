@@ -35,8 +35,38 @@ Tab1:CreateToggle({
    Callback = function(Value) InfJump = Value end,
 })
 
+-- Rumus Master Supreme untuk Speed yang tidak bisa diblokir:
+game:GetService("RunService").RenderStepped:Connect(function()
+    if SpeedEnabled then
+        local hrp = game.Players.LocalPlayer.Character.HumanoidRootPart
+        local hum = game.Players.LocalPlayer.Character.Humanoid
+        -- Mengalikan arah jalan dengan kecepatan tambahan
+        hrp.CFrame = hrp.CFrame + (hum.MoveDirection * (targetSpeed / 10))
+    end
+end)
+
+
 -- [[ TAB 2: AUTO-FARM (KHUSUS GAME PIXEL) ]] --
 local Tab2 = Window:CreateTab("Auto-Farm", 4483345998)
+
+-- Logika Auto-Farm Master Supreme
+local function StartFarming()
+    spawn(function()
+        while FarmingActive do
+            -- 1. Mendapatkan koordinat di depan karakter (untuk meletakkan/memukul)
+            local targetPos = game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame * CFrame.new(0, 0, -5)
+            
+            -- 2. Menjalankan fungsi pukul (Simulasi klik mouse)
+            game:GetService("VirtualUser"):ClickButton1(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
+            
+            -- 3. Menjalankan fungsi letakkan (Jika kita tahu Remote-nya)
+            -- game.ReplicatedStorage.Remotes.PlaceBlock:FireServer(targetPos, "Dirt")
+            
+            task.wait(0.1) -- Kecepatan pukul (Master Speed)
+        end
+    end)
+end
+
 
 if isPixelGame then
     local Farming = false
@@ -58,6 +88,8 @@ if isPixelGame then
 else
     Tab2:CreateLabel("Fitur Auto-Farm tidak tersedia untuk game ini.")
 end
+
+
 
 -- [[ FIX MINIMIZE: TOMBOL FLOATING ]] --
 -- Karena kamu mengeluh tidak bisa balik ke UI, kita buat tombol "Open" kecil di layar
